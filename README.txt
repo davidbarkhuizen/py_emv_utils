@@ -1,0 +1,1 @@
+py_emv_utils = Python EMV Utils [using pyscard]

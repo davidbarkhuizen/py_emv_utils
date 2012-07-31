@@ -173,6 +173,31 @@ def parse_tlv(tlv, known_tags=None, tlv_tree=None, parent_node=None):
     if (parent_node == tlv_tree.root_node):
         return tlv_tree
 
+def parse_concatted_dol_list_to_ordered_list_of_tag_and_length(clist):
+    '''
+    returns [(tag, tag_value)]
+    '''
+    
+    ordered_components = []
+    
+    rem = clist[:]
+    
+    while (len(rem) > 0):
+        tag, remainder = parse_tag(rem, known_tags=tag_meanings.emv_tags.keys())
+        if (len(tag) == 0) or (len(remainder) == 0):
+            break
+        value = remainder.pop(0)
+        
+        # synchronise outer var
+        for i in range(len(tag) + 1):
+            rem.pop(0)
+        
+        tag_string = tag_byte_list_to_tag_str(tag)
+        ordered_components.append([tag_string, value]) 
+        
+    return ordered_components
+
+
 def parse_concatted_dol_list(clist):
     
     dols_by_tag = {}

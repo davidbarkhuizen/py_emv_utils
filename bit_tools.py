@@ -23,6 +23,15 @@ def hex_string_to_byte_list(hex_string):
         byte_list.append(ord(b))    
     return byte_list
 
+def byte_list_to_ascii_string(byte_list):
+    return ''.join([chr(b) if (b >= 31) else '-' for b in byte_list])
+
+def byte_list_to_hex_string(byte_list):
+    return ''.join(['%02X' % b for b in byte_list])
+
+def byte_list_to_decimal_string(byte_list):                    
+    return ''.join([str(b) for b in byte_list])
+
 def bit_flag_is_set_in_byte_list(byte_list, flag):
     target_byte = byte_list[flag.byte_num - 1]
     
@@ -100,5 +109,6 @@ class Nibble(object):
         report.append('%s : %i' % (self.description, processed_byte))
         
         return report
-        
+
+
         

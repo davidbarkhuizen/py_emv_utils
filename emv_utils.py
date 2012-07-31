@@ -15,6 +15,7 @@ from smartcard.Exceptions import CardConnectionException
 import tlv_utils
 import tag_meanings
 import aid_dict
+import bit_tools
 from apdu import *
 import chip_utils
 from application_file_locator import ApplicationFileLocator
@@ -369,12 +370,39 @@ def get_challenge_supported(connection):
     return (sw1, sw2) == (0x90, 0x00)        
 
 def read_transaction_logs(connection):
+    '''
+Trx Log Notes
+---------------
+
+Pre-Requisite Conditions
+1. App Selected
+
+Log Entry Data Element = 9F4D
+------------------------------
+b1 => SFI containing the cyclic transaction log file, SFI E [11..30]
+b2 => Max No. of Records in the Txn Log
+
+To Read Txn Log Recs => use Read Record cmd
+
+Txn Log Recs
+- Not designated in App File Locator (AFI)
+- each rec = concatenation of elements specified in the Log Format data element
+- do not contain the App Elementary File (AEF) data template (tag 70)
+
+STEPS
+1. Select App
+2. Retrieve Log Entry data element [located in the FCI Issuer Discretionary Data]
+3. GET DATA - to get Log Format data element
+4. READ RECORD - read individual Txn Log Recs
+    '''
 
     if DO_LOG:
         s = 'TRANSACTION LOGS'
         logging.info('-'*len(s))
         logging.info(s)
         logging.info('-'*len(s))
+    
+    log_entries = []
     
     for sfi in range(11, 31):
         for record_number in range(0, 31):       
@@ -384,9 +412,13 @@ def read_transaction_logs(connection):
     
             if (len(ret_data) > 0):
                 
+                log_entries.append(ret_data)
+                
                 if DO_LOG:
                     logging.info('\n' + 'READ RECORD - sfi = %i, rec_num = %i' % (sfi, record_number))
                     logging.info(('.'.join(['%02X' % b for b in ret_data]) + ' ' + '.'.join(['%s' % b for b in ret_data])))
+
+    return log_entries
 
 def generate_summary_report():
     '''
@@ -592,3 +624,49 @@ def read_record_for_sfi(connection, sfi, record_number):
 
     return tlv_tree
 
+def parse_transaction_log_records(log_format_str, log_record_strings):
+    '''
+    return (csv_header_line, [csv_record_line])
+    '''    
+    
+    log_format_byte_list = bit_tools.hex_string_to_byte_list(log_format_str)
+    log_format = tlv_utils.parse_concatted_dol_list_to_ordered_list_of_tag_and_length(log_format_byte_list)
+    
+    records = []
+    for record_string in log_record_strings:
+        records.append(bit_tools.hex_string_to_byte_list(record_string))
+    
+    parsed_records = []
+    for orig_rec in records:
+        
+        rec = list(orig_rec)
+        
+        parsed = []        
+        for (tag_name, tag_length) in log_format:
+            value = []
+            for i in range(tag_length):
+                value.append(rec.pop(0))
+            parsed.append(value)
+        
+        parsed_records.append(parsed)
+
+    #fname = 'c:/dev/logs/parsed_txn_log.log'
+    #f = open(fname, 'w')
+    
+    csv_header = ','.join([tag_meanings.emv_tags[tag_name] for (tag_name, tag_length) in log_format])
+    #f.write(headers + '\n')
+    
+    csv_lines = []    
+    
+    for parsed_rec in parsed_records:
+        csv_string = ''
+        for rec_element in parsed_rec:
+            csv_string = (csv_string + bit_tools.byte_list_to_hex_string(rec_element) + ',') 
+        csv_lines.append(csv_string)
+
+    #for line in csv_lines:
+    #    f.write(line + '\n')
+
+    #f.close()
+    
+    return (csv_header, csv_lines)

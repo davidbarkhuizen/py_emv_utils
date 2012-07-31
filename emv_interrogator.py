@@ -254,11 +254,39 @@ def interrogate(connection):
         
         # ----------------------------------------------------------------------------------------
         # GET CHALLENGE SUPPORTED ?
+        
         s = 'GET CHALLENGE Supported ? %s' % str(get_challenge_supported(connection) == True)
         logging.info('-'*len(s))
         logging.info(s)
         logging.info('-'*len(s))
+        
+        # ----------------------------------------------------------------------------------------
+        # TXN LOG                                    
+
+        # parse_transaction_log_records(format_str, log_rec_strings)
+
+        s = 'Transaction Log'
+        logging.info('-'*len(s))
+        logging.info(s)
+        logging.info('-'*len(s))
+        
+        log_format_tag = '9F4F'
+        
+        if (log_format_tag not in collected_tags):
+            logging.info('Not Present')
+        else:
+            log_format_byte_list = collected_tags[log_format_tag][0]
+            log_format_string = bit_tools.byte_list_to_hex_string(log_format_byte_list)
             
+            log_records = read_transaction_logs(connection)
+            log_rec_strings = [bit_tools.byte_list_to_hex_string(log_rec) for log_rec in log_records]
+            
+            (header, lines) = parse_transaction_log_records(log_format_string, log_rec_strings)
+            
+            logging.info(header)
+            for line in lines:
+                logging.info(line)
+                
 def locate_chips_and_interrogate():
     
     reader_list = chip_utils.get_readers()

@@ -1,4 +1,4 @@
-DO_LOG = True
+DO_LOG = False
 
 import logging
 import log_util

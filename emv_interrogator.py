@@ -1,13 +1,6 @@
 from emv_utils import *
 from tag_categories import tag_report, template_tags
-
-def log_header(msg, logging_fn, header_char='-'):
-    logging_fn('='*len(s))
-    logging_fn(s)
-    logging_fn('='*len(s))
-
-def log_header_with_space(msg, logging_fn, header_char='-'):
-    log_header(msg, logging_fn, header_char)
+from text_utils import *
 
 def interrogate(connection):
     
@@ -52,10 +45,7 @@ def interrogate(connection):
         
         logging.info('')
         s = 'App Label = \'%s\', AID = %s, Terminal Lookup Name = %s' % (app_label, aid_str, app_name)
-        logging.info('='*len(s))
-        logging.info(s)
-        logging.info('='*len(s))
-        logging.info('')
+        write_header_with_trailing_line(s, logging.info)
         
         # FIRST CHECK IF THE FCI CONTAINS A PDOL
         
@@ -135,10 +125,7 @@ def interrogate(connection):
         '''
         
         s = 'AGGREGATED TAG REPORT - sorted by tag'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
-        logging.info('')    
+        write_header_with_trailing_line(s, logging.info)    
 
         for i in range(len(tag_col)):
             tag = tag_col[i]
@@ -157,9 +144,7 @@ def interrogate(connection):
         # -------------------------------------------------------------------------------
         
         s = 'AIP = Application Interchange Profile'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
+        write_header_with_trailing_line(s, logging.info)
    
         for line in aip_report:
             logging.info(line)
@@ -203,9 +188,7 @@ def interrogate(connection):
         # ----------------------------------------------------------------------------------------
         # UNCATEGORISED TAGS
         s = 'Uncategorised Fields'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
+        write_header_with_trailing_line(s, logging.info)
         for tag in unreported_tags:
             logging.info('%s - %s' % (tag, tag_meanings.emv_tags[tag])) 
             
@@ -213,9 +196,7 @@ def interrogate(connection):
         # PARSE DOL FIELDS                    
 
         s = 'DATA OBJECT LISTS - DOLs'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
+        write_header_with_trailing_line(s, logging.info)
 
         for tag in sorted(collected_tags):
             if (tag in tag_meanings.DOL_TAGS):
@@ -225,9 +206,7 @@ def interrogate(connection):
                 logging.info('')
                 
                 s = 'DOL List: %s - %s [%i items]' % (tag, tag_meanings.emv_tags[tag], len(dol_info))
-                logging.info('-'*len(s))
-                logging.info(s)
-                logging.info('-'*len(s))
+                write_header_with_trailing_line(s, logging.info)
                 for dol_tag in sorted(dol_info.keys()):
                     info = dol_info[dol_tag]
                     logging.info(dol_tag.ljust(6) + tag_meanings.emv_tags[dol_tag].ljust(50) + ' 0x%02X'  % info)
@@ -242,10 +221,8 @@ def interrogate(connection):
             app_usage_control_bytes = collected_tags['9F07'][0]
             app_usage_report = report_on_application_usage_control(app_usage_control_bytes)
         
-        s = '\nApplication Usage Control'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
+        s = 'Application Usage Control'
+        write_header_with_trailing_line(s, logging.info)
    
         for line in sorted(app_usage_report):
             logging.info(line)
@@ -259,10 +236,7 @@ def interrogate(connection):
             cvm_report = report_on_card_holder_verification_method(cvm_byte_list)
         
         s = 'CVM'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
-        logging.info('')
+        write_header_with_trailing_line(s, logging.info)
         for line in cvm_report:
             logging.info(line)
         logging.info('')
@@ -271,9 +245,7 @@ def interrogate(connection):
         # GET CHALLENGE SUPPORTED ?
         
         s = 'GET CHALLENGE Supported ? %s' % str(get_challenge_supported(connection) == True)
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
+        write_header_with_trailing_line(s, logging.info)
         
         # ----------------------------------------------------------------------------------------
         # TXN LOG                                    
@@ -281,9 +253,7 @@ def interrogate(connection):
         # parse_transaction_log_records(format_str, log_rec_strings)
 
         s = 'Transaction Log'
-        logging.info('-'*len(s))
-        logging.info(s)
-        logging.info('-'*len(s))
+        write_header_with_trailing_line(s, logging.info)
         
         log_format_tag = '9F4F'
         

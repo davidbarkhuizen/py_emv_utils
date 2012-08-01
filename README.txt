@@ -9,3 +9,7 @@ Python smart card library.
 Written by Jean-Daniel Aussel [http://sourceforge.net/users/jdaussel]
 Project Page = http://pyscard.sourceforge.net/
 Download Page = http://sourceforge.net/projects/pyscard/
+
+BASIC USE CASE, from the cmd line
+1. card in slot
+2. @cmdline >> python emv_interrogator.py

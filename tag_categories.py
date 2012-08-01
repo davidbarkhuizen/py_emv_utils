@@ -9,6 +9,7 @@ template_tags = [
         '77',  # Response Message Template Format 2
         '80',  # Response Message Template Format 1
         '83',  # Command Template
+        
         'A5',  # File Control Information (FCI) Proprietary Template
         'BF0C' # File Control Information (FCI) Issuer Discretionary Data
         ]

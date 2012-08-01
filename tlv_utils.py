@@ -1,6 +1,7 @@
+DO_LOG = True
+
 import logging
 import log_util
-DO_LOG = False
 
 import tag_meanings
 import tag_types

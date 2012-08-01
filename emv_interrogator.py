@@ -1,6 +1,14 @@
 from emv_utils import *
 from tag_categories import tag_report, template_tags
 
+def log_header(msg, logging_fn, header_char='-'):
+    logging_fn('='*len(s))
+    logging_fn(s)
+    logging_fn('='*len(s))
+
+def log_header_with_space(msg, logging_fn, header_char='-'):
+    log_header(msg, logging_fn, header_char)
+
 def interrogate(connection):
     
     aid_appname = []
@@ -49,9 +57,16 @@ def interrogate(connection):
         logging.info('='*len(s))
         logging.info('')
         
+        # FIRST CHECK IF THE FCI CONTAINS A PDOL
+        
+        pdol = None
+        pdols = tlv.values_for_tag('9F38')
+        if (len(pdols) > 0):
+            pdol = pdols[0]
+        
         # AFL - APPLICATION FILE LOCATOR, APL - APPLICATION INTERCHANGE PROFILE
         
-        afl, aip_byte_list = get_afl_aip_via_processing_options(connection)
+        afl, aip_byte_list = get_afl_aip_via_processing_options(connection, pdol)
         
         aip = AIP(aip_byte_list)
         aip_report = aip.report()

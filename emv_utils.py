@@ -1,3 +1,5 @@
+DO_LOG = True
+
 # logging
 import logging
 import log_util
@@ -21,7 +23,6 @@ import chip_utils
 from application_file_locator import ApplicationFileLocator
 from application_interchange_profile import AIP
 
-DO_LOG = False
 COL_WIDTH = 30
 
 PSE_DDF_NAME='1PAY.SYS.DDF01'
@@ -163,6 +164,7 @@ def select_application_by_aid(connection, aid):
 
     if DO_LOG:
         logging.info('\n' + 'SELECT (A)DF BY DF Name / AID')
+        logging.info('AID = %s' % bit_tools.byte_list_to_hex_string(aid))
         for x in report_on_reply(sw1, sw2, ret_data):
             logging.info(x)
    
@@ -186,7 +188,7 @@ def select_application_by_aid(connection, aid):
             
     return tlv_tree
 
-def get_afl_aip_via_processing_options(connection):
+def get_afl_aip_via_processing_options(connection, pdol=None):
     '''
     return afl or None
     
@@ -195,10 +197,76 @@ def get_afl_aip_via_processing_options(connection):
     - Appp File Locator
     
     EMV 4.2 Book 3 5.4 = Data Object List - DOL
+    
+    ----------------------------------------------------------------------------------------------
+    
+    [ EMV 4.2 Book 3 - Application Specification - 10.1 Initiate Application Processing ]
+    
+    The PDOL is a list of tags and lengths of terminal-resident data elements needed by the ICC 
+    in processing the GET PROCESSING OPTIONS command. Only data elements having the terminal as 
+    the source of the data may be referenced in the PDOL. If the PDOL does not exist, the GET 
+    PROCESSING OPTIONS command uses a command data field of '8300', indicating that the length 
+    of the value field in the command data is zero.
+
+    There may be some exceptions in the timing for this. For example, these bits could be set to 
+    0 at the completion of the previous transaction or prior to application selection of this 
+    transaction. The intent here is that the processing steps as described in the Application 
+    Specification presume the bits have been initialised to 0.
+
+    If the PDOL exists, the terminal extracts the PDOL from the FCI of the ADF and uses it to 
+    create a concatenated list of data elements without tags or lengths. The rules specified 
+    in section 5.4 apply to processing of the PDOL. If an amount field (either Amount, Authorised 
+    or Amount, Other) is referenced in the PDOL and the terminal is unable to provide the amount 
+    at this point in transaction processing, the amount field in the data element list shall be 
+    filled with hexadecimal zeroes. The terminal issues the GET PROCESSING OPTIONS command using 
+    either the command data field of '8300' (if there was no PDOL in the ICC) or a data object 
+    constructed with a tag of '83' and the appropriate length according to BER-TLV encoding rules 
+    and a value field that is the concatenated list of data elements resulting from processing the 
+    PDOL.
+    
+    The card returns either:
+    - The Application Interchange Profile the Application File Locator (identifying the files and 
+    records containing the data to be used for the transaction), and status SW1 SW2 = '9000', or
+    - Status SW1 SW2 = '6985' (Conditions of use not satisfied), indicating that the transaction 
+    cannot be performed with this application.
+
+    The format of the response message is given in section 6.5.8. If the status words '6985' are 
+    returned, the terminal shall eliminate the current application from consideration and return to 
+    the Application Selection function to select another application.
     '''    
     
     # APDU = GET PROCESSING OPTIONS
-    data = default_dol = [0x83, 0x00] # tag = 8300
+    data = default_dol = [0x83, 0x00] # tag = 83, length = 0
+    
+    if (pdol != None):
+        data = [0x83]        
+        
+        concatted = []        
+        tags_with_length = tlv_utils.parse_concatted_dol_list_to_ordered_list_of_tag_and_length(pdol)
+        for (tag, tag_length) in tags_with_length:            
+            
+            # TERMINAL COUNTRY CODE
+            if (tag == '9F1A'): 
+                terminal_country_code_ZAR = [0x07, 0x10]
+                concatted.extend(terminal_country_code_ZAR)
+                
+            # '81':'Amount Authorised (Binary)',
+            # '9F02':'Amount Authorised (Numeric)',
+            # '9F03':'Amount Other (Numeric)',
+            # '9F04':'Amount Other (Binary)',
+            
+            elif (tag in ['81', '9F02', '9F03', '9F04']):
+                for i in range(tag_length):
+                    concatted.append(0x00)
+            
+            else:
+                msg = '! Unknown PDOL Tag %s' % tag
+                logging.info(msg)
+                raise Exception(msg)
+                    
+        data.append(len(concatted))
+        data.extend(concatted)    
+    
     ret_data, sw1, sw2 = select_and_requery(connection=connection, 
                                             cla=GET_PROCESSING_OPTIONS.cla, 
                                             ins=GET_PROCESSING_OPTIONS.ins, 
@@ -236,6 +304,13 @@ def get_afl_aip_via_processing_options(connection):
     combined_tags = []
     combined_tags.extend(get_proc_options_format_1_tags)
     combined_tags.extend(get_proc_options_format_2_tags)
+    
+    '''
+    hex_string = bit_tools.byte_list_to_hex_string(ret_data)
+    file = open('c:/dev/logs/pdol.txt', 'w')
+    file.write(hex_string + '\n')
+    file.close()
+    '''
     
     tlv_tree = tlv_utils.parse_tlv(ret_data, known_tags=combined_tags)
     
@@ -612,7 +687,7 @@ def read_record_for_sfi(connection, sfi, record_number):
     for tag_str in tlv_tree.distinct_tag_list():
         if (tag_str in tag_meanings.DOL_TAGS):
             node = tlv_tree.get_nodes_for_tag(tag_str)[0]
-            dol_info = tlv_utils.parse_concatted_dol_list(node.value_byte_list)
+            dol_info, repeated_tag_counts = tlv_utils.parse_concatted_dol_list(node.value_byte_list)
             
             if DO_LOG:
                 s = 'DOL List: %s - %s' % (tag_str, tag_meanings.emv_tags[tag_str])

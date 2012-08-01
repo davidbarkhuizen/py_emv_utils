@@ -1,3 +1,5 @@
+DO_LOG = True
+
 # logging
 import logging
 import log_util
@@ -16,7 +18,6 @@ import tlv_utils
 
 from apdu import *
 
-DO_LOG = False
 COL_WIDTH = 30
 
 def get_readers():   

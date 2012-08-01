@@ -34,7 +34,7 @@ def get_pse_sfi(connection):
     of PSE (Payment System Environment)
     
     SUCCESS
-    returns (sfi, tlv_tree)
+    returns (sfi, tlv_tree, report)
     FAILURE
     returns (None, error_message)
     
@@ -67,13 +67,17 @@ def get_pse_sfi(connection):
         '6283' : 'PSE is blocked',
         }
     
-    report.append('SELECT DIRECTORY DEFINITION FILE = 1PAY.SYS.DDF01')
+    report.append('Attempting to Select PSE')
+    report.append('DIRECTORY DEFINITION FILE = 1PAY.SYS.DDF01')
     for x in report_on_reply(sw1, sw2, ret_data):
         report.append(x)
     
     hex = '%00X%00X' % (sw1, sw2)
-    if hex not in select_pse_error_tags:
-        
+    # NO PSE
+    if hex in select_pse_error_tags:
+        report.append('Error - %s' % select_pse_error_tags[hex])
+    # PSE FOUND
+    else:
         # EMV 4.2 Book 1  - 11.3 Select Command-Response APDUs, Table 44
         # FCI Template returned by successful selection of a DDF
         # Response = 6f 19 84 0e 31 50 41 59 2e 53 59 53 2e 44 44 46 30 31 a5 07 88 01 01 9f 11 01 01
@@ -95,8 +99,11 @@ def get_pse_sfi(connection):
         for line in tlv_tree.report():
             report.append(line)    
     
+        # '88':'Short File Identifier (SFI)',
         node = tlv_tree.get_nodes_for_qtag('6F.A5.88')[0]
         sfi = node.value_byte_list[0]
+        
+        report.append('SFI for PSE - %s' % text_utils.byte_list_to_hex_string(sfi))
         
         return (sfi, tlv_tree, report)
     
@@ -525,6 +532,10 @@ def get_pse_aid_appname(connection):
     aid_appname = []
     (sfi, tlv_tree, report) = get_pse_sfi(connection)    
     
+    if DO_LOG:
+        for line in report:
+            logging.info(line)
+    
     if sfi:
         for aid in get_application_ids_from_pse_elementary_dir_file_for_sfi(connection, sfi):
             
@@ -538,7 +549,6 @@ def get_pse_aid_appname(connection):
             aid_appname.append((aid, app_name))
     else:
         error_message = tlv_tree
-        logging.info('PSE not found. [error = %s]' % error_message)
     
     return aid_appname
 

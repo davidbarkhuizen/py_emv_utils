@@ -1,3 +1,48 @@
+class StatusWordSimple(object):
+    def __init__(self, sw1, sw2, msg):
+        self.sw1 = sw1
+        self.sw2 = sw2
+        self.msg = msg
+    def matches(self, other_sw1, other_sw2):
+        return (self.sw1 == other_sw1) and (self.sw2 == other_sw2)
+    def gen_msg(self):
+        return self.msg
+        
+class StatusWordComplex(object):
+    def __init__(self, sw1, sw2_matcher, msg_generator):
+        self.sw1 = sw1
+        self.sw2_matcher = sw2_matcher
+        self.msg_generator = msg_generator
+    def matches(self, other_sw1, other_sw2):
+        return (self.sw1 == other_sw1) and (self.sw2_matcher(other_sw2) == True)
+    def gen_msg(self):
+        return self.msg_generator(other_sw2)
+        
+normal_statuses = [
+    StatusWordSimple('90', '00', 'Process completed (any other value for SW2 is RFU)'),
+    ]
+
+warning_statuses = [
+    StatusWordSimple('62', '83', 'State of non-volatile memory unchanged; selected file invalidated'),
+    StatusWordSimple('63', '00', 'State of non-volatile memory changed; authentication failed'),
+    StatusWordComplex('63', lambda Cx : Cx[0] == 'C', lambda Cx : 'State of non-volatile memory changed; counter provided by %s (from 0-15)' % Cx[1])
+    ]
+
+error_statuses = [
+    StatusWordSimple('69', '83', 'Command not allowed; authentication method blocked'),
+    StatusWordSimple('69', '84', 'Command not allowed; referenced data invalidated'),
+    StatusWordSimple('69', '85', 'Command not allowed; conditions of use not satisfied'),
+    StatusWordSimple('6A', '81', 'Wrong parameter(s) P1 P2; function not supported'),
+    StatusWordSimple('6A', '82', 'Wrong parameter(s) P1 P2; file not found'),
+    StatusWordSimple('6A', '83', 'Wrong parameter(s) P1 P2; record not found'),
+    StatusWordSimple('6A', '88', 'Referenced data (data objects) not found'),
+    ]
+
+statuses = { 'normal' : normal_statuses, 
+    'warning' : warning_statuses,
+    'error' : error_statuses
+    }
+
 class SELECT(object):
     cla = 0x00
     ins = 0xA4
@@ -74,16 +119,25 @@ def select_and_requery(connection=None, cla=None, ins=None, p1=None, p2=None, lc
     else:
         return (initial_reply_data, initial_sw1, initial_sw2)
 
-def report_on_reply(sw1, sw2, data, log_data_content=True):
+def report_on_reply(sw1, sw2, data, log_data_content=False):
     
     lines = []
+
+    sw1_str = '%02X' % sw1
+    sw2_str = '%02X' % sw2
     
-    lines.append('SW1:SW2 = %s-%s, %s-%s, len(data) = %i' % (str(sw1), str(sw2), hex(sw1), hex(sw2), len(data)))
+    msg = None
+    
+    for status_type in statuses:
+        for status in statuses[status_type]:
+            if status.matches(sw1_str, sw2_str):
+                msg = status_type + ' - ' + status.gen_msg()
+
+    lines.append('STATUS:  %s. SW1:SW2 = %s-%s, len(data) = %i' % (msg, sw1_str, sw2_str, len(data)))
     
     if (log_data_content):    
         if data:        
             lines.append('HEX   ' + '.'.join(['%02X' % x for x in data]))
-            lines.append('BIN   ' + '.'.join(['%i' % x for x in data]))
         else:
             lines.append('NO DATA')
     

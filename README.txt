@@ -1,5 +1,10 @@
-py_emv_utils = Python EMV Utils [using pyscard]
-
-2012 - David Barkhuizen
+py_emv_utils = Python EMV Utils Using PySCard
+2012
+David Barkhuizen
 
 Parts of this code were developed using time contributed by Synthesis Software Technologies [http://www.synthesis.co.za/].
+
+PYSCARD
+pyscard is a python smart card library.
+Project Page  = http://pyscard.sourceforge.net/
+Download Page = http://sourceforge.net/projects/pyscard/

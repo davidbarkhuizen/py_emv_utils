@@ -22,6 +22,7 @@ from apdu import *
 import chip_utils
 from application_file_locator import ApplicationFileLocator
 from application_interchange_profile import AIP
+from text_utils import *
 
 COL_WIDTH = 30
 
@@ -103,7 +104,7 @@ def get_pse_sfi(connection):
         node = tlv_tree.get_nodes_for_qtag('6F.A5.88')[0]
         sfi = node.value_byte_list[0]
         
-        report.append('SFI for PSE - %s' % text_utils.byte_list_to_hex_string(sfi))
+        report.append('SFI for PSE - %s' % bit_tools.byte_list_to_hex_string([sfi]))
         
         return (sfi, tlv_tree, report)
     

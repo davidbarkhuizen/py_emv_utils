@@ -10,6 +10,13 @@ Written by Jean-Daniel Aussel [http://sourceforge.net/users/jdaussel]
 Project Page = http://pyscard.sourceforge.net/
 Download Page = http://sourceforge.net/projects/pyscard/
 
+INSTALLATION - LINUX/UBUNTU
+packages:  pcscd, python-pyscard
+e.g. install from the command line via apt-get
+$ sudo apt-get install pcscd
+$ sudo apt-get install python-pyscard
+
 BASIC USE CASE, from the cmd line
-1. card in slot
-2. @cmdline >> python emv_interrogator.py
+1. plug smart card reader into usb
+2. insert smart card into reader
+3. $ python emv_interrogator.py

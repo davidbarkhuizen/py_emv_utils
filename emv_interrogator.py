@@ -302,12 +302,17 @@ def locate_chips_and_interrogate():
     else:
         logging.info('no card found in any reader')
 
+from smartcard.pcsc.PCSCExceptions import *
+
 def main():
-    log_util.init_logging(file_name='/logs/emv')
+    log_util.init_logging(file_name='logs/emv')
     try:
         locate_chips_and_interrogate()
+    except EstablishContextException:
+        logging.info('EstablishContextException')
+        logging.info('if you\'re running linux, ensure that pcscd is installed')
     except CardConnectionException:
-        logging.info('card connection error')
+        logging.info('card connection error, or no card present')
 
 if __name__ == '__main__':
     main()

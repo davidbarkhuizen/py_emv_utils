@@ -17,6 +17,8 @@ $ sudo apt-get install pcscd
 $ sudo apt-get install python-pyscard
 
 BASIC USE CASE, from the cmd line
-1. plug smart card reader into usb
-2. insert smart card into reader
-3. $ python emv_interrogator.py
+- plug smart card reader into usb
+- insert smart card into reader
+- launch emv_interrogator from the command line, e.g.
+    $ python emv_interrogator.py
+- logs will be printed to screen, and to time-stamped text file in logs subfolder

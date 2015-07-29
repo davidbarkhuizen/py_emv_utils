@@ -33,3 +33,5 @@ packages:  pcscd, python-pyscard
 e.g. install from the command line via apt-get
 $ sudo apt-get install pcscd
 $ sudo apt-get install python-pyscard
+
+

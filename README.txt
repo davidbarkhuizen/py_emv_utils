@@ -33,3 +33,17 @@ packages:  pcscd, python-pyscard
 e.g. install from the command line via apt-get
 $ sudo apt-get install pcscd
 $ sudo apt-get install python-pyscard
+
+## Installation
+
+### osx
+
+1. install pip
+$ pip install bdist_mpkg
+
+2. install swig
+$ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+$ brew install swig
+
+3. install pyscard
+$ pip install pyscard

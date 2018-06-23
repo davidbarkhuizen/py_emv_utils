@@ -5,7 +5,7 @@ python EMV utilities using the pyscard smartcard interface
 David Barkhuizen  
 
 Parts of this code were developed using time contributed by:  
-- [http://www.synthesis.co.za/](Synthesis Software Technologies)
+- [Synthesis Software Technologies](http://www.synthesis.co.za/)
 
 ## PreRequisites
 

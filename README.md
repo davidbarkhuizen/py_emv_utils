@@ -46,8 +46,4 @@ $ pip install pyscard
 
 ## Usage
 
-- plug smart card reader into usb port
-- insert smart card into reader
-- launch emv_interrogator from the command line, e.g.
-    $ python3 emv_interrogator.py
-- logs will be printed to screen, and to time-stamped text file in logs subfolder
+$ python3 emv_interrogator.py

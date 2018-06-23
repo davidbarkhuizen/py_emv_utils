@@ -17,7 +17,7 @@ class BitFlag(object):
 def hex_string_to_byte_list(hex_string):
     # convert hex string to byte list
     byte_list = []
-    for i in range(len(hex_string) / 2):
+    for i in range(len(hex_string) // 2):
         hex_byte_string = hex_string[i*2:i*2+2]
         b = binascii.unhexlify(hex_byte_string) 
         byte_list.append(ord(b))    

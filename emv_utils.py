@@ -642,7 +642,7 @@ def report_on_card_holder_verification_method(cvm_byte_list):
     
     report.append('')
     
-    for i in range(len(rule_bytes) / 2):
+    for i in range(len(rule_bytes) // 2):
         bytes = rule_bytes[2*i:2*i+2]
         report.append('rule %i' % (i + 1))
         update_report_on_cv_rule(bytes[0], bytes[1], report)

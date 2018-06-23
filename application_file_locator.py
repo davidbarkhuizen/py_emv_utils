@@ -18,7 +18,7 @@ class ApplicationFileLocator(object):
     def __init__(self, afl): 
        
         loc_strings = []
-        for i in range(len(afl) / 4):
+        for i in range(len(afl) // 4):
             loc_strings.append(afl[i*4:i*4+4])
    
         self.locations = []   

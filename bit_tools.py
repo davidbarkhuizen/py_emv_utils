@@ -63,8 +63,7 @@ class CompositeBitFlag(object):
         shadowed_byte = (target_byte & mask) 
         
         if shadowed_byte not in self.descriptions_for_values:
-            print('%i not in %s' % (shadowed_byte, str(self.descriptions_for_values.keys())))
-            raise
+            raise ValueError('%i not in %s' % (shadowed_byte, str(list(self.descriptions_for_values.keys()))))
 
         report.append('%s : %s' % (self.description, self.descriptions_for_values[shadowed_byte]))
         

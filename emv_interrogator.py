@@ -13,7 +13,7 @@ def interrogate(connection):
         for app_name in aid_dict.aids:
             
             aid = unhexlify(aid_dict.aids[app_name])
-            aid = [ord(x) for x in aid]
+            aid = list(aid)
             
             aid_appname.append((aid, app_name))
     
@@ -80,7 +80,8 @@ def interrogate(connection):
             record_report.append('SFI %i - 1st rec %i, last rec %i' % (loc.sfi, loc.first_record_number, loc.last_record_number))
             for record_number in range(loc.first_record_number, loc.last_record_number + 1):
                 tlv = read_record_for_sfi(connection, sfi, record_number)
-                tlvs_for_app.append(tlv)
+                if tlv is not None:
+                    tlvs_for_app.append(tlv)
                 
         collected_tags = {}
         for tlv in tlvs_for_app:
@@ -217,10 +218,11 @@ def interrogate(connection):
         # ----------------------------------------------------------------------------------------
         # Application Usage Control
         
+        app_usage_report = ['Not Present']
         if ('9F07' in collected_tags) or ('9F07' in unreported_tags):
             app_usage_control_bytes = collected_tags['9F07'][0]
             app_usage_report = report_on_application_usage_control(app_usage_control_bytes)
-        
+
         s = 'Application Usage Control'
         write_header_with_trailing_line(s, logging.info)
    
@@ -231,10 +233,11 @@ def interrogate(connection):
         # ----------------------------------------------------------------------------------------
         # 8E - Cardholder Verification Method (CVM) List
         
+        cvm_report = ['Not Present']
         if ('8E' in collected_tags) or ('8E' in unreported_tags):
             cvm_byte_list = collected_tags['8E'][0]
             cvm_report = report_on_card_holder_verification_method(cvm_byte_list)
-        
+
         s = 'CVM'
         write_header_with_trailing_line(s, logging.info)
         for line in cvm_report:

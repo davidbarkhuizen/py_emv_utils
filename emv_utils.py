@@ -73,7 +73,7 @@ def get_pse_sfi(connection):
     for x in report_on_reply(sw1, sw2, ret_data):
         report.append(x)
     
-    hex = '%00X%00X' % (sw1, sw2)
+    hex = '%02X%02X' % (sw1, sw2)
     # NO PSE
     if hex in select_pse_error_tags:
         report.append('Error - %s' % select_pse_error_tags[hex])
@@ -352,8 +352,8 @@ def get_afl_aip_via_processing_options(connection, pdol=None):
     return afl, aip
 
 def verify_pin():
-    raise
- 
+    raise NotImplementedError
+
     # VERIFY PIN
     # EMV 4.2 Book 3 - 6.5.12 = VERIFY Command-Response APDUs
     
@@ -418,17 +418,18 @@ def retrieve_get_data_items(connection):
     
     for (p1, p2) in item_tags:
         
-        tag = '%00X' % p1 + '%00X' % p2                            
-        
+        tag = '%02X' % p1 + '%02X' % p2
+
         ret_data, sw1, sw2 = select_and_requery(connection=connection, cla=GET_DATA.cla, ins=GET_DATA.ins, p1=p1, p2=p2, le=0x00)
 
         if (len(ret_data) == 0):
-            logging.info('%s - sw1:sw2 = %s:%s' % (tag, '%00X' % sw1, '%00X' % sw2))
+            logging.info('%s - sw1:sw2 = %s:%s' % (tag, '%02X' % sw1, '%02X' % sw2))
             continue
-        
+
         tlv = tlv_utils.parse_tlv(ret_data, known_tags=tag_meanings.emv_tags.keys())
-        
-        tlvs.append(tlv)
+
+        if tlv is not None:
+            tlvs.append(tlv)
         
     return tlvs
 
@@ -688,13 +689,16 @@ def read_record_for_sfi(connection, sfi, record_number):
             logging.info(x)
     
     tlv_tree = tlv_utils.parse_tlv(ret_data, known_tags=tag_meanings.emv_tags.keys())
-    
+
+    if tlv_tree is None:
+        return None
+
     if DO_LOG:
         logging.info('')
         for line in tlv_tree.report():
             logging.info(line)
-    
-    # PARSE DOL FIELDS                    
+
+    # PARSE DOL FIELDS
     for tag_str in tlv_tree.distinct_tag_list():
         if (tag_str in tag_meanings.DOL_TAGS):
             node = tlv_tree.get_nodes_for_tag(tag_str)[0]
@@ -706,7 +710,7 @@ def read_record_for_sfi(connection, sfi, record_number):
                 logging.info(s)
                 logging.info('-'*len(s))
                 for dol_tag in dol_info.keys():
-                    logging.info('%s - %s - 0x%00X' % (dol_tag, tag_meanings.emv_tags[dol_tag], dol_info[dol_tag]))
+                    logging.info('%s - %s - 0x%02X' % (dol_tag, tag_meanings.emv_tags[dol_tag], dol_info[dol_tag]))
 
     return tlv_tree
 

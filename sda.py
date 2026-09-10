@@ -13,12 +13,12 @@ def dot_sep_hex_string_to_byte_list(dot_string):
 issuer_pub_key_cert_dot_string = '0C.4F.B4.DC.50.77.F4.B2.39.E9.38.0F.71.D0.64.5E.C8.0D.B6.62.3A.FF.79.F3.27.6E.62.36.2A.FC.53.FB.5F.F4.CA.EB.EF.51.D8.D6.6D.E8.C0.EC.AA.F5.6F.A0.0A.F4.8E.3B.27.D7.4D.4D.D6.38.6E.4C.E4.11.CB.44.FD.F8.F0.6D.9B.1D.32.75.78.13.A7.1A.7E.D9.48.B3.BE.17.17.84.C0.22.06.22.3C.4A.3A.C0.7D.6F.32.23.A4.62.04.3E.F6.97.1C.20.FD.81.5C.15.A4.35.7F.9D.D1.28.C3.DF.0A.4C.BE.A0.F0.8A.37.8E.71.42.98.7C.63.56.9A.05.5A.88.9F.E2.9E.B9.41.1B.31.CB.52.3A'
 issuer_pub_key_cert_byte_list = dot_sep_hex_string_to_byte_list(issuer_pub_key_cert_dot_string)
 issuer_pub_key_cert_hex_string = issuer_pub_key_cert_dot_string.replace('.', '')
-issuer_pub_key_cert = long(issuer_pub_key_cert_hex_string, 16)
+issuer_pub_key_cert = int(issuer_pub_key_cert_hex_string, 16)
 
 icc_pub_key_cert_dot_string = '7C.C2.18.6A.67.CA.A6.F1.6D.EA.40.B9.64.D1.82.F1.83.0E.72.C4.01.75.A8.F3.AB.32.FD.38.13.B9.92.3C.E5.A8.57.13.5B.AA.33.B0.11.BD.A5.9C.60.6A.BB.33.34.EB.97.2A.6D.CD.72.07.EC.ED.7B.D5.44.D8.C3.48.88.14.14.B3.12.34.40.28.CE.FC.BE.BA.4F.B3.99.F0.C0.58.FA.12.60.CB.64.A1.CF.56.51.60.E0.FA.B0.9A.AA.E4.34.32.61.B3.AA.DE.3E.92.4E.E5.AF.96.BE.6D.AD.39.A0.E8.23.8D.8D.B6.26.0D.2E.D7.9B.FE.22.80.68.C5.D6.A6.85.A5.3E.5E.50.AA.70.B7.97.A2.F9.BB'
 icc_pub_key_cert_byte_list = dot_sep_hex_string_to_byte_list(icc_pub_key_cert_dot_string)
 icc_pub_key_cert_hex_string = icc_pub_key_cert_dot_string.replace('.', '')
-icc_pub_key_cert = long(icc_pub_key_cert_hex_string, 16)
+icc_pub_key_cert = int(icc_pub_key_cert_hex_string, 16)
 
 
 ca_modulus_byte_list = [0xA8,0x9F,0x25,0xA5,0x6F,0xA6,0xDA,0x25,0x8C,0x8C,0xA8,0xB4,0x04,0x27,0xD9,0x27,
@@ -31,9 +31,9 @@ ca_modulus_byte_list = [0xA8,0x9F,0x25,0xA5,0x6F,0xA6,0xDA,0x25,0x8C,0x8C,0xA8,0
     0xB7,0xE3,0x31,0x1C,0xA5,0xEF,0x85,0x6C,0x2F,0x88,0x84,0x74,0xB8,0x36,0x12,0xA8,
     0x2E,0x4E,0x00,0xD0,0xCD,0x40,0x69,0xA6,0x78,0x31,0x40,0x43,0x3D,0x50,0x72,0x5F]
 ca_modulus_hex_string  = ''.join(['%02X' % x for x in ca_modulus_byte_list])
-ca_modulus = long(ca_modulus_hex_string, 16)
+ca_modulus = int(ca_modulus_hex_string, 16)
 
-ca_exp = long(0x03)
+ca_exp = int(0x03)
 
 def main():
 

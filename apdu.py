@@ -5,9 +5,9 @@ class StatusWordSimple(object):
         self.msg = msg
     def matches(self, other_sw1, other_sw2):
         return (self.sw1 == other_sw1) and (self.sw2 == other_sw2)
-    def gen_msg(self):
+    def gen_msg(self, other_sw2=None):
         return self.msg
-        
+
 class StatusWordComplex(object):
     def __init__(self, sw1, sw2_matcher, msg_generator):
         self.sw1 = sw1
@@ -15,7 +15,7 @@ class StatusWordComplex(object):
         self.msg_generator = msg_generator
     def matches(self, other_sw1, other_sw2):
         return (self.sw1 == other_sw1) and (self.sw2_matcher(other_sw2) == True)
-    def gen_msg(self):
+    def gen_msg(self, other_sw2=None):
         return self.msg_generator(other_sw2)
         
 normal_statuses = [
@@ -131,7 +131,7 @@ def report_on_reply(sw1, sw2, data, log_data_content=False):
     for status_type in statuses:
         for status in statuses[status_type]:
             if status.matches(sw1_str, sw2_str):
-                msg = status_type + ' - ' + status.gen_msg()
+                msg = status_type + ' - ' + status.gen_msg(sw2_str)
 
     lines.append('STATUS:  %s. SW1:SW2 = %s-%s, len(data) = %i' % (msg, sw1_str, sw2_str, len(data)))
     

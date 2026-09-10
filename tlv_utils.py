@@ -228,40 +228,18 @@ def parse_concatted_dol_list(clist):
         
     return dols_by_tag, repeated_tag_counts
 
-def get_unqualified_tag(qualified_tag):
-    if ('.' not in qualified_tag):
-        return qualified_tag
-    else:
-        reversed = qualified_tag[::-1]
-        rev_tag = reversed[:reversed.find('.')]
-        return rev_tag[::-1]
+def parse_and_report(tlv, known_tags=None):
+    '''
+    Parse a byte list into a TlvTree and return its formatted report lines.
+    '''
+    if known_tags is None:
+        known_tags = tag_meanings.emv_tags.keys()
 
-def parse_and_report(tlv, known_tags=None):    
-    tags = parse_tlv(tlv, known_tags=known_tags)    
-    report = []
-    for tag in tags.keys():
-        report.append(tag.ljust(16) + tag_meanings.tags[get_unqualified_tag(tag)].ljust(60) + '.'.join(['%02X' % b for b in tags[tag]]))
-    return report
+    tlv_tree = parse_tlv(tlv, known_tags=known_tags)
+    if tlv_tree is None:
+        return []
 
-def report(tags, known_tags=None):
-    report = []
-    
-    max_tag_length = 0
-    max_meaning_length = 0
-    for tag in tags.keys():
-        if (len(tag) > max_tag_length):
-            max_tag_length = len(tag) 
-        meaning = tag_meanings.tags[get_unqualified_tag(tag)]
-        if (len(meaning) > max_meaning_length):
-            max_meaning_length = len(meaning)
-    
-    for tag in sorted(tags.keys()):
-        left_text = tag.ljust(max_tag_length + 2) + tag_meanings.tags[get_unqualified_tag(tag)].ljust(max_meaning_length + 2) + ('(%i) ' % len(tags[tag])).ljust(10)
-        report.append(left_text + 'H: ' + '.'.join(['%02X' % b for b in tags[tag]]))
-        right_text = 'A: ' + ''.join([chr(b) if (b >= 31) else '-' for b in tags[tag]])
-        if (len(right_text) > 0):
-            report.append(' '*len(left_text) + right_text)
-    return report
+    return tlv_tree.report()
 
 tag_6f = [0x6f,0x19,0x84,0x0e,0x31,0x50,0x41,0x59,0x2e,0x53,0x59,0x53,0x2e,0x44,0x44,0x46,0x30,0x31,0xa5,0x07,0x88,0x01,0x01,0x9f,0x11,0x01,0x01]
 tag_70_simple = [0x70,0x54,0x5F,0x25,0x03,0x11,0x12,0x01,0x5F,0x24,0x03,0x17,0x02,0x28,0x9F,0x07,0x02,0xFF,0x00,0x5A,0x08,0x52,0x22,0x50,0x24,0x60,0x90,0x28,0x81,0x5F,0x34,0x01,0x00,0x8E,0x12,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x42,0x01,0x41,0x03,0x42,0x03,0x5E,0x03,0x1F,0x03,0x9F,0x0D,0x05,0xB8,0x60,0xF4,0x80,0x00,0x9F,0x0E,0x05,0x00,0x10,0x08,0x00,0x00,0x9F,0x0F,0x05,0xB8,0x68,0xF4,0x98,0x00,0x5F,0x28,0x02,0x07,0x10,0x9F,0x4A,0x01,0x82]
@@ -269,10 +247,12 @@ tag_70_extended = [0x70,0x81,0x93,0x90,0x81,0x90,0x64,0x8A,0xBC,0x88,0xB2,0x17,0
 
 
 if (__name__ == '__main__'):
-    log_util.init_logging(file_name='../../logs/tlv')
-    logging.info('\ntag_70_simple')
-    parse_and_report(tag_70_simple)
-    logging.info('\ntag_70_extended')
-    parse_and_report(tag_70_extended)
-    logging.info('\ntag_6f')
-    parse_and_report(tag_6f)
+    log_util.init_logging(file_name='logs/tlv')
+    for name, sample in [
+        ('tag_70_simple', tag_70_simple),
+        ('tag_70_extended', tag_70_extended),
+        ('tag_6f', tag_6f),
+    ]:
+        logging.info('\n' + name)
+        for line in parse_and_report(sample):
+            logging.info(line)

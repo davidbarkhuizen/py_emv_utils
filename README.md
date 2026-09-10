@@ -15,7 +15,8 @@ Parts of this code were developed using time contributed by
 - Python 3
 - A PC/SC stack (`pcscd` and drivers on Linux; built in on macOS and Windows)
 - A contact smartcard reader
-- [pyscard](https://github.com/LudovicRousseau/pyscard)
+- [pyscard](https://github.com/LudovicRousseau/pyscard) (the only Python
+  dependency; also listed in `requirements.txt`)
 
 No third-party crypto library is required; `sda.py` does its RSA recovery with
 `pow()`.
@@ -30,6 +31,7 @@ pip install pyscard
 ```
 
 `python3-pyscard` from apt also works in place of `pip install pyscard`.
+`pip install -r requirements.txt` is equivalent.
 
 ### macOS
 
@@ -52,8 +54,8 @@ Place a card on the reader and run:
 python3 emv_interrogator.py
 ```
 
-The script enumerates connected PC/SC readers, connects to the first card it
-finds, and produces a decoded report covering:
+The script enumerates connected PC/SC readers and, for every reader that has a
+card, produces a decoded report covering:
 
 - the PSE / application list and FCI for each application (AID, label, PDOL)
 - Application Interchange Profile (AIP) and Application File Locator (AFL)
@@ -68,6 +70,20 @@ Output is written both to the console and to a timestamped file under `logs/`
 (e.g. `logs/emv_2018-6-23-14-5.log`). The interrogator issues only standard EMV
 read commands (SELECT, GET PROCESSING OPTIONS, READ RECORD, GET DATA, GET
 CHALLENGE); it does not run a transaction or attempt cardholder verification.
+
+### Behaviour worth knowing
+
+- **Application discovery.** If the card exposes a PSE (`1PAY.SYS.DDF01`), its
+  application list is read from there. If it does not, discovery falls back to a
+  fixed AID list in `aid_dict.py` — an application whose AID is not in that list
+  is not found.
+- **GET PROCESSING OPTIONS.** When an application's PDOL asks for terminal data,
+  the tool supplies the selected AID for `9F06` and zero bytes for amount fields
+  and for any other requested element; that is enough for the card to return the
+  AIP and AFL.
+- **Terminal country.** It identifies itself as a South African terminal
+  (Terminal Country Code `0710`, `emv_utils.TERMINAL_COUNTRY_CODE`). Most cards
+  ignore this; change the constant if a card's geographic checks matter.
 
 ## Modules
 
@@ -87,6 +103,4 @@ CHALLENGE); it does not run a transaction or attempt cardholder verification.
 - `sda.py` is a standalone experiment (offline data authentication) driven by
   hard-coded sample certificates, not part of the interrogation path.
 - `gsm_utils.py` (SIM/GSM helpers) and `arch.py` (a local `rar` archiving
-  script) are unrelated to card interrogation and are not maintained;
-  `gsm_utils.py` imports a `chip_interrogator` module that is not in this
-  repository.
+  script) are unrelated to card interrogation and are not maintained.

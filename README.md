@@ -16,8 +16,9 @@ Parts of this code were developed using time contributed by
 - A PC/SC stack (`pcscd` and drivers on Linux; built in on macOS and Windows)
 - A contact smartcard reader
 - [pyscard](https://github.com/LudovicRousseau/pyscard)
-- [pycryptodome](https://pypi.org/project/pycryptodome/) — only for `sda.py`
-  (offline data authentication); not needed for card interrogation
+
+No third-party crypto library is required; `sda.py` does its RSA recovery with
+`pow()`.
 
 ## Installation
 
@@ -83,8 +84,8 @@ CHALLENGE); it does not run a transaction or attempt cardholder verification.
 
 ## Notes
 
-- `sda.py` still contains Python 2 constructs (`long`) and does not run as-is
-  under Python 3.
+- `sda.py` is a standalone experiment (offline data authentication) driven by
+  hard-coded sample certificates, not part of the interrogation path.
 - `gsm_utils.py` (SIM/GSM helpers) and `arch.py` (a local `rar` archiving
   script) are unrelated to card interrogation and are not maintained;
   `gsm_utils.py` imports a `chip_interrogator` module that is not in this

@@ -1,10 +1,17 @@
 from binascii import unhexlify, hexlify
 
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA
-
 import logging
 from log_util import init_logging
+
+
+def rsa_public_recover(cert, exponent, modulus):
+    '''
+    Raw (textbook) RSA public-key operation: cert ** exponent mod modulus.
+
+    EMV offline data authentication recovers a signed data block by applying
+    the public key this way; there is no padding to strip at this level.
+    '''
+    return pow(cert, exponent, modulus)
 
 def dot_sep_hex_string_to_byte_list(dot_string):
     hex_byte_list = dot_string.split('.')
@@ -42,14 +49,12 @@ def main():
     logging.info('CA Modulus, length = %i' % len(ca_modulus_byte_list))
     logging.info(ca_modulus_hex_string)
     
-    ca_pub_key = RSA.construct((ca_modulus, ca_exp))
-    (clear_text,) = ca_pub_key.encrypt(issuer_pub_key_cert, None)
+    clear_text = rsa_public_recover(issuer_pub_key_cert, ca_exp, ca_modulus)
 
-    
-    print('LONG - Clear Text')
+    print('INT - Clear Text')
     print(clear_text)
     print('HEX - Clear Text')
-    s = '%02X' % clear_text
+    s = '%X' % clear_text
     print(s)
     print(len(s))
     

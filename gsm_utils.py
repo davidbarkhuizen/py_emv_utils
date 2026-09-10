@@ -15,18 +15,18 @@ from smartcard.Exceptions import NoCardException
 from smartcard.Exceptions import CardConnectionException
 
 import apdu
-import chip_interrogator as chip
+import chip_utils
 
 def select_and_requery(connection=None, cla=None, ins=None, p1=None, p2=None, lc=None, data=None, le=None):
     
-    initial_reply_data, initial_sw1, initial_sw2 = chip.select(connection=connection, cla=cla, ins=ins, p1=p1, p2=p2, lc=lc, data=data, le=le)
+    initial_reply_data, initial_sw1, initial_sw2 = apdu.select(connection=connection, cla=cla, ins=ins, p1=p1, p2=p2, lc=lc, data=data, le=le)
     
     # SW1 = 0x61 => retrieve data using GET RESPONSE command
     if (initial_sw1 == 0x9F):
-        return chip.select(connection=connection, cla=0xA0, ins=0xC0, p1=0x00, p2=0x00, le=initial_sw2)
+        return apdu.select(connection=connection, cla=0xA0, ins=0xC0, p1=0x00, p2=0x00, le=initial_sw2)
     # SW1 = 0x6c => retrieve data by repeating initial command
     elif (initial_sw1 == 0x6C):
-        return chip.select(connection=connection, cla=cla, ins=ins, p1=p1, p2=p2, lc=lc, data=data, le=initial_sw2)
+        return apdu.select(connection=connection, cla=cla, ins=ins, p1=p1, p2=p2, lc=lc, data=data, le=initial_sw2)
     # initial response indicates other error
     else:
         return (initial_reply_data, initial_sw1, initial_sw2)
@@ -158,18 +158,18 @@ def interrogate(connection):
     '''
     logging.info('')
     ret_data, sw1, sw2 = select_and_requery(connection=connection, cla=0xA0, ins=0xA4, p1=0x00, p2=0x00, data=icc_data, le=0x00)
-    report = chip.report_on_reply(sw1, sw2, ret_data)
+    report = apdu.report_on_reply(sw1, sw2, ret_data)
     for line in report: print(line)
     # 10.1 Contents of the EFs at the MF level
     
     logging.info('')
     ret_data, sw1, sw2 = select_and_requery(connection=connection, cla=0xA0, ins=0xA4, p1=0x00, p2=0x00, data=df_gsm_data, le=0x00)
-    report = chip.report_on_reply(sw1, sw2, ret_data)
+    report = apdu.report_on_reply(sw1, sw2, ret_data)
     for line in report: print(line)
     
     logging.info('')
     ret_data, sw1, sw2 = select_and_requery(connection=connection, cla=0xA0, ins=0xA4, p1=0x00, p2=0x00, data=imsi_data, le=0x00)
-    report = chip.report_on_reply(sw1, sw2, ret_data)
+    report = apdu.report_on_reply(sw1, sw2, ret_data)
     for line in report: print(line)
     '''
  
@@ -183,7 +183,7 @@ def interrogate(connection):
 
 def locate_chips_and_interrogate():
     
-    reader_list = chip.get_readers()
+    reader_list = chip_utils.get_readers()
     
     if (len(reader_list) == 0):
         logging.info('no smart card reader found.')
@@ -196,7 +196,7 @@ def locate_chips_and_interrogate():
         reader = reader_list[i]        
         
         got_card_str = 'no card'
-        if chip.card_is_present_in_reader(reader):
+        if chip_utils.card_is_present_in_reader(reader):
             got_card_str = 'card is present'
             readers_with_cards.append(reader)
         
@@ -205,7 +205,7 @@ def locate_chips_and_interrogate():
     if readers_with_cards:    
         for reader in readers_with_cards:
             logging.info('using card found in %s' % reader.name)
-            connxn = chip.get_connected_connection_for_reader(reader)
+            connxn = chip_utils.get_connected_connection_for_reader(reader)
             interrogate(connxn)            
             connxn.disconnect()
     else:

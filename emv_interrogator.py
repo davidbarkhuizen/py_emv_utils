@@ -56,7 +56,7 @@ def interrogate(connection):
         
         # AFL - APPLICATION FILE LOCATOR, APL - APPLICATION INTERCHANGE PROFILE
         
-        afl, aip_byte_list = get_afl_aip_via_processing_options(connection, pdol)
+        afl, aip_byte_list = get_afl_aip_via_processing_options(connection, pdol, aid)
         
         aip = AIP(aip_byte_list)
         aip_report = aip.report()

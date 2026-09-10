@@ -196,7 +196,22 @@ def select_application_by_aid(connection, aid):
             
     return tlv_tree
 
-def get_afl_aip_via_processing_options(connection, pdol=None):
+# Terminal Country Code (ISO 3166-1 numeric) sent in GET PROCESSING OPTIONS.
+# 0x0710 = 710 = South Africa.
+TERMINAL_COUNTRY_CODE = [0x07, 0x10]
+
+
+def dol_value(value_bytes, length):
+    '''
+    Fit a terminal-supplied value to the length a DOL entry asks for:
+    truncate if too long, right-pad with 0x00 if too short.
+    '''
+    fitted = list(value_bytes)[:length]
+    fitted.extend([0x00] * (length - len(fitted)))
+    return fitted
+
+
+def get_afl_aip_via_processing_options(connection, pdol=None, aid=None):
     '''
     return afl or None
     
@@ -249,31 +264,35 @@ def get_afl_aip_via_processing_options(connection, pdol=None):
     if (pdol != None):
         data = [0x83]        
         
-        concatted = []        
+        concatted = []
         tags_with_length = tlv_utils.parse_concatted_dol_list_to_ordered_list_of_tag_and_length(pdol)
-        for (tag, tag_length) in tags_with_length:            
-            
-            # TERMINAL COUNTRY CODE
-            if (tag == '9F1A'): 
-                terminal_country_code_ZAR = [0x07, 0x10]
-                concatted.extend(terminal_country_code_ZAR)
-                
-            # '81':'Amount Authorised (Binary)',
-            # '9F02':'Amount Authorised (Numeric)',
-            # '9F03':'Amount Other (Numeric)',
-            # '9F04':'Amount Other (Binary)',
-            
+        for (tag, tag_length) in tags_with_length:
+
+            # 9F1A - Terminal Country Code
+            if (tag == '9F1A'):
+                concatted.extend(dol_value(TERMINAL_COUNTRY_CODE, tag_length))
+
+            # 9F06 - Application Identifier (AID) - terminal.
+            # Echo back the AID that was just selected, when we have it.
+            elif (tag == '9F06' and aid is not None):
+                concatted.extend(dol_value(aid, tag_length))
+
+            # 81   - Amount, Authorised (Binary)
+            # 9F02 - Amount, Authorised (Numeric)
+            # 9F03 - Amount, Other (Numeric)
+            # 9F04 - Amount, Other (Binary)
             elif (tag in ['81', '9F02', '9F03', '9F04']):
-                for i in range(tag_length):
-                    concatted.append(0x00)
-            
+                concatted.extend(dol_value([], tag_length))
+
+            # Any other terminal-sourced element: this tool has no value for it,
+            # so send zero bytes of the requested length and carry on. GPO only
+            # needs a correctly-sized command field to return the AIP and AFL.
             else:
-                msg = '! Unknown PDOL Tag %s' % tag
-                logging.info(msg)
-                raise Exception(msg)
-                    
+                logging.info('PDOL tag %s not supplied by this tool; sending %i zero byte(s)' % (tag, tag_length))
+                concatted.extend(dol_value([], tag_length))
+
         data.append(len(concatted))
-        data.extend(concatted)    
+        data.extend(concatted)
     
     ret_data, sw1, sw2 = select_and_requery(connection=connection, 
                                             cla=GET_PROCESSING_OPTIONS.cla, 
